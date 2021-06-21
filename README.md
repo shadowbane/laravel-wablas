@@ -232,7 +232,5 @@ If you discover any security related issues, please send email to [adly.shadowba
 Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
 
 
-
-
-[ico-downloads]: https://img.shields.io/packagist/dt/laravel-notification-channels/telegram.svg?style=flat-square
-[link-packagist]: https://packagist.org/packages/laravel-notification-channels/telegram
+[ico-downloads]: https://img.shields.io/packagist/dt/shadowbane/laravel-wablas.svg?style=flat-square
+[link-packagist]: https://packagist.org/packages/shadowbane/laravel-wablas

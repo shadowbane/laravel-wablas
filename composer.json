@@ -2,7 +2,7 @@
     "name": "shadowbane/laravel-wablas",
     "description": "Send Simple WhatsApp message via Wablas API",
     "type": "project",
-    "license": "MIT",
+    "license": "GPL-3.0-or-later",
     "authors": [
         {
             "name": "Adli I. Ifkar",
