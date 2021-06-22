@@ -56,8 +56,21 @@ class LaravelWablasChannel
         return json_decode($response->getBody()->getContents(), true);
     }
 
-    private function getNotifiableWhatsappNumber(User $user)
+    /**
+     * @param User $user
+     *
+     * @throws FailedToSendNotification
+     *
+     * @return string
+     */
+    private function getNotifiableWhatsappNumber(User $user): string
     {
+        // return debug phone number if local
+        // this will prevent real user getting debug notification
+        if (app()->isLocal() && config('app.debug')) {
+            return config('laravel-wablas.debug_number');
+        }
+
         $whatsapp = $user->{config('laravel-wablas.whatsapp_number_field')};
 
         if (!blank(config('laravel-wablas.whatsapp_number_json_field'))) {
@@ -66,6 +79,10 @@ class LaravelWablasChannel
 
         if (substr($whatsapp, 0, 1) == '0' || substr($whatsapp, 0, 1) == '8') {
             $whatsapp = 62 . $whatsapp;
+        }
+
+        if (blank($whatsapp)) {
+            throw FailedToSendNotification::destinationIsEmpty();
         }
 
         return $whatsapp;
