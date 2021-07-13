@@ -33,9 +33,9 @@ class LaravelWablas
      */
     public function __construct(string $token = null, HttpClient $httpClient = null, string $apiBaseUri = null)
     {
-        $this->token = $token;
+        $this->token = $token ?? config('laravel-wablas.token');
         $this->http = $httpClient ?? new HttpClient();
-        $this->setApiBaseUri($apiBaseUri);
+        $this->setApiBaseUri($apiBaseUri ?? config('laravel-wablas.endpoint'));
     }
 
     /**
