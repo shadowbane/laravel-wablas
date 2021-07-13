@@ -6,6 +6,8 @@ use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\ClientException;
 use Psr\Http\Message\ResponseInterface;
 use Shadowbane\LaravelWablas\Exceptions\FailedToSendNotification;
+use Shadowbane\LaravelWablas\Traits\EndpointTrait;
+use Shadowbane\LaravelWablas\Traits\TokenTrait;
 
 /**
  * Class LaravelWablas.
@@ -14,48 +16,32 @@ use Shadowbane\LaravelWablas\Exceptions\FailedToSendNotification;
  */
 class LaravelWablas
 {
+    use EndpointTrait;
+    use TokenTrait;
+
     /** @var HttpClient HTTP Client */
-    protected $http;
+    protected HttpClient $http;
 
-    /** @var string|null Wablas API Token. */
-    protected $token;
-
-    /** @var string Wablas API Base URI */
-    protected $apiBaseUri;
+    /** @var Device Wablas Device API */
+    public Device $device;
 
     /**
      * @param string|null $token
      * @param HttpClient|null $httpClient
-     * @param string|null $apiBaseUri
+     * @param string|null $endpoint
      *
      * @throws FailedToSendNotification
-     *
+     * @throws \Throwable
      */
-    public function __construct(string $token = null, HttpClient $httpClient = null, string $apiBaseUri = null)
+    public function __construct(string $token = null, HttpClient $httpClient = null, string $endpoint = null)
     {
-        $this->token = $token ?? config('laravel-wablas.token');
         $this->http = $httpClient ?? new HttpClient();
-        $this->setApiBaseUri($apiBaseUri ?? config('laravel-wablas.endpoint'));
-    }
 
-    /**
-     * API Base URI setter.
-     *
-     * @param string|null $apiBaseUri
-     *
-     * @throws FailedToSendNotification
-     *
-     * @return $this
-     */
-    public function setApiBaseUri(?string $apiBaseUri): self
-    {
-        if (empty($apiBaseUri) || is_null($apiBaseUri)) {
-            throw FailedToSendNotification::urlIsEmpty();
-        }
+        $this
+            ->setToken($token)
+            ->setEndpoint($endpoint);
 
-        $this->apiBaseUri = rtrim($apiBaseUri, '/');
-
-        return $this;
+        $this->device = new Device($this->token, $this->endpoint);
     }
 
     /**
@@ -83,19 +69,6 @@ class LaravelWablas
     }
 
     /**
-     * Set Token.
-     *
-     * @param string $token
-     * @return $this
-     */
-    public function setToken(string $token): self
-    {
-        $this->token = $token;
-
-        return $this;
-    }
-
-    /**
      * @param array $params
      * @return ResponseInterface|null
      *
@@ -111,7 +84,7 @@ class LaravelWablas
      *
      * @param array  $params
      *
-     * @throws FailedToSendNotification
+     * @throws FailedToSendNotification|\GuzzleHttp\Exception\GuzzleException
      *
      * @return ResponseInterface|null
      */
@@ -122,7 +95,7 @@ class LaravelWablas
         }
 
         try {
-            return $this->http->post($this->apiBaseUri, [
+            return $this->http->post("{$this->endpoint}/send-message", [
                 'headers' => [
                     'Authorization' => $this->token,
                 ],

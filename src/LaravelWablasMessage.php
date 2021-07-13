@@ -12,7 +12,7 @@ use Shadowbane\LaravelWablas\Exceptions\FailedToSendNotification;
  */
 class LaravelWablasMessage implements JsonSerializable
 {
-    protected $payload = [];
+    protected array $payload = [];
 
     /**
      * @param string $content

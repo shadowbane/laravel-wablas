@@ -4,7 +4,7 @@ return [
     /*
      * Wablas API Endpoint
      */
-    'endpoint' => env('WABLAS_ENDPOINT', 'https://sawit.wablas.com/api/send-message'),
+    'endpoint' => env('WABLAS_ENDPOINT', 'https://sawit.wablas.com/api'),
 
     /*
      * Your Wablas API Token

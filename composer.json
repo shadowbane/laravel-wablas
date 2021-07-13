@@ -10,11 +10,11 @@
         }
     ],
     "require": {
-        "PHP": "^7.4 || ^8.0",
+        "PHP": "^8.0",
         "ext-json": "*",
-        "guzzlehttp/guzzle": "^6.2 || ^7.0",
-        "illuminate/notifications": "^7.0 || ^8.0",
-        "illuminate/support": "^7.0 || ^8.0"
+        "guzzlehttp/guzzle": "^7.0",
+        "illuminate/notifications": "^8.0",
+        "illuminate/support": "^8.0"
     },
     "autoload": {
         "psr-4": {
