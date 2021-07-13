@@ -17,10 +17,10 @@ class LaravelWablas
     /** @var HttpClient HTTP Client */
     protected $http;
 
-    /** @var string|null Telegram Bot API Token. */
+    /** @var string|null Wablas API Token. */
     protected $token;
 
-    /** @var string Telegram Bot API Base URI */
+    /** @var string Wablas API Base URI */
     protected $apiBaseUri;
 
     /**
@@ -50,7 +50,7 @@ class LaravelWablas
     public function setApiBaseUri(?string $apiBaseUri): self
     {
         if (empty($apiBaseUri) || is_null($apiBaseUri)) {
-            throw FailedToSendNotification::tokenIsEmpty();
+            throw FailedToSendNotification::urlIsEmpty();
         }
 
         $this->apiBaseUri = rtrim($apiBaseUri, '/');
