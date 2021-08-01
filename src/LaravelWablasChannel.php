@@ -26,7 +26,7 @@ class LaravelWablasChannel
     /**
      * Send the given notification.
      *
-     * @param mixed        $notifiable
+     * @param mixed $notifiable
      * @param Notification $notification
      *
      * @throws FailedToSendNotification
@@ -41,10 +41,17 @@ class LaravelWablasChannel
         }
 
         if ($notifiable instanceof User) {
-            $message->to($this->getNotifiableWhatsappNumber($notifiable));
+            $waNumber = $this->getNotifiableWhatsappNumber($notifiable);
+            if (!blank($waNumber)) {
+                $message->to($waNumber);
+            }
         }
 
         $params = $message->toArray();
+
+        if (blank($params['phone'])) {
+            throw FailedToSendNotification::destinationIsEmpty();
+        }
 
         if (isset($params['token']) && !empty($params['token'])) {
             $this->wablas->setToken($params['token']);
@@ -61,9 +68,9 @@ class LaravelWablasChannel
      *
      * @throws FailedToSendNotification
      *
-     * @return string
+     * @return string|null
      */
-    private function getNotifiableWhatsappNumber(User $user): string
+    private function getNotifiableWhatsappNumber(User $user): ?string
     {
         // return debug phone number if local
         // this will prevent real user getting debug notification
@@ -71,18 +78,20 @@ class LaravelWablasChannel
             return config('laravel-wablas.debug_number');
         }
 
-        $whatsapp = $user->{config('laravel-wablas.whatsapp_number_field')};
+        $whatsapp = null;
 
-        if (!blank(config('laravel-wablas.whatsapp_number_json_field'))) {
-            $whatsapp = $whatsapp[config('laravel-wablas.whatsapp_number_json_field')];
+        $waField = $user->{config('laravel-wablas.whatsapp_number_field')};
+
+        if (!blank(config('laravel-wablas.whatsapp_number_json_field')) && !blank($waField)) {
+            $whatsapp = $waField[config('laravel-wablas.whatsapp_number_json_field')];
         }
 
-        if (substr($whatsapp, 0, 1) == '0' || substr($whatsapp, 0, 1) == '8') {
+        if (!blank($whatsapp)) {
+            if (substr($whatsapp, 0, 1) == '0') {
+                $whatsapp = substr($whatsapp, 1, strlen($whatsapp) - 1);
+            }
+
             $whatsapp = 62 . $whatsapp;
-        }
-
-        if (blank($whatsapp)) {
-            throw FailedToSendNotification::destinationIsEmpty();
         }
 
         return $whatsapp;
