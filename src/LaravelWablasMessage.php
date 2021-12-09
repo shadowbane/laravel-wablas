@@ -4,6 +4,7 @@ namespace Shadowbane\LaravelWablas;
 
 use JsonSerializable;
 use Shadowbane\LaravelWablas\Exceptions\FailedToSendNotification;
+use Shadowbane\LaravelWablas\Exceptions\LaravelWablasException;
 
 /**
  * Class LaravelWablasMessage.
@@ -12,38 +13,71 @@ use Shadowbane\LaravelWablas\Exceptions\FailedToSendNotification;
  */
 class LaravelWablasMessage implements JsonSerializable
 {
-    protected array $payload = [];
+    public string $token = '';
 
-    /**
-     * @param string $content
-     *
-     * @return static
-     */
-    public static function create(string $content = ''): self
-    {
-        return new self($content);
-    }
+    public string $phone;
+    public string $message;
+    public string|null $attachment = null;
+
+    public string $type = 'message';
+    public bool $secret = false;
+    public bool $retry = false;
+    public bool $isGroup = false;
 
     /**
      * Message constructor.
      *
      * @param string $content
+     * @param string|null $attachment
      */
-    public function __construct(string $content = '')
+    public function __construct(string $content = '', string $attachment = null)
     {
-        $this->content($content);
+        $this->content(
+            content: $content,
+            attachment: $attachment
+        );
+    }
+
+    /**
+     * @param string $content
+     * @param string|null $attachment
+     *
+     * @return static
+     */
+    public static function create(string $content = '', string $attachment = null): self
+    {
+        return new self(
+            content: $content,
+            attachment: $attachment
+        );
     }
 
     /**
      * Notification message (Supports Markdown).
      *
      * @param string $content
+     * @param string|null $attachment
      *
      * @return $this
      */
-    public function content(string $content): self
+    public function content(string $content = '', string $attachment = null): self
     {
-        $this->payload['message'] = $content;
+        $this->message = $content;
+        $this->attachment = $attachment;
+
+        return $this;
+    }
+
+    /**
+     * Notification Attachment (For image, video, document, or audio message).
+     *
+     * @param string $attachment
+     *
+     * @return $this
+     */
+    public function attachment(string $attachment): self
+    {
+        $this->attachment = $attachment;
 
         return $this;
     }
@@ -61,7 +95,7 @@ class LaravelWablasMessage implements JsonSerializable
         // return debug phone number if local
         // this will prevent real user getting debug notification
         if (app()->isLocal() && config('app.debug')) {
-            $this->payload['phone'] = config('laravel-wablas.debug_number');
+            $this->phone = config('laravel-wablas.debug_number');
 
             return $this;
         }
@@ -71,12 +105,7 @@ class LaravelWablasMessage implements JsonSerializable
             throw FailedToSendNotification::destinationIsEmpty();
         }
 
-        // implode, if this is an array
-        if (is_array($phoneNumber)) {
-            $phoneNumber = implode(',', $phoneNumber);
-        }
-
-        $this->payload['phone'] = $phoneNumber;
+        $this->phone = $phoneNumber;
 
         return $this;
     }
@@ -96,16 +125,17 @@ class LaravelWablasMessage implements JsonSerializable
             throw FailedToSendNotification::tokenIsEmpty();
         }
 
-        $this->payload['token'] = $token;
+        $this->token = $token;
 
         return $this;
     }
 
     /**
-     * Convert the object into something JSON serializable.
+     * @throws \Shadowbane\LaravelWablas\Exceptions\LaravelWablasException
      *
-     * @return mixed
+     * @return array
      */
+    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return $this->toArray();
@@ -114,10 +144,117 @@ class LaravelWablasMessage implements JsonSerializable
     /**
      * Returns params payload.
      *
+     * @throws \Shadowbane\LaravelWablas\Exceptions\LaravelWablasException
+     *
      * @return array
      */
     public function toArray(): array
     {
-        return $this->payload;
+        $arr = [
+            'token' => $this->token,
+            'phone' => $this->phone ?? null,
+            'secret' => $this->secret,
+            'retry' => $this->retry,
+            'isGroup' => $this->isGroup,
+        ];
+
+        if (in_array($this->type, ['image', 'video', 'document'])) {
+            if (blank($this->attachment)) {
+                throw LaravelWablasException::attachmentIsEmpty();
+            }
+            $arr['caption'] = $this->message;
+            $arr[$this->type] = $this->attachment;
+        }
+
+        if ($this->type === 'audio') {
+            $arr[$this->type] = $this->attachment;
+        }
+
+        if ($this->type === 'message') {
+            $arr['message'] = $this->message;
+        }
+
+        return $arr;
+    }
+
+    /**
+     * Send message as Text.
+     *
+     * @throws \Shadowbane\LaravelWablas\Exceptions\LaravelWablasException
+     *
+     * @return $this
+     */
+    public function sendAsText(): self
+    {
+        return $this->setType('message');
+    }
+
+    /**
+     * Send message as Image.
+     *
+     * @throws \Shadowbane\LaravelWablas\Exceptions\LaravelWablasException
+     *
+     * @return $this
+     */
+    public function sendAsImage(): self
+    {
+        return $this->setType('image');
+    }
+
+    /**
+     * Send message as Audio.
+     *
+     * @throws \Shadowbane\LaravelWablas\Exceptions\LaravelWablasException
+     *
+     * @return $this
+     */
+    public function sendAsAudio(): self
+    {
+        return $this->setType('audio');
+    }
+
+    /**
+     * Send message as Video.
+     *
+     * @throws \Shadowbane\LaravelWablas\Exceptions\LaravelWablasException
+     *
+     * @return $this
+     */
+    public function sendAsVideo(): self
+    {
+        return $this->setType('video');
+    }
+
+    /**
+     * Send message as Document.
+     *
+     * @throws \Shadowbane\LaravelWablas\Exceptions\LaravelWablasException
+     *
+     * @return $this
+     */
+    public function sendAsDocument(): self
+    {
+        return $this->setType('document');
+    }
+
+    /**
+     * Set Message Type.
+     *
+     * @param string $type
+     *
+     * @throws \Shadowbane\LaravelWablas\Exceptions\LaravelWablasException
+     *
+     * @return $this
+     */
+    public function setType(string $type): self
+    {
+        // validate the type. allowed type is: message (default), image, audio, video, document
+        if (!in_array($type, ['message', 'image', 'audio', 'video', 'document'])) {
+            throw LaravelWablasException::invalidMessageType();
+        }
+
+        $this->type = $type;
+
+        return $this;
     }
 }

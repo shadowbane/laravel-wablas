@@ -30,6 +30,7 @@ class LaravelWablasChannel
      * @param Notification $notification
      *
      * @throws FailedToSendNotification
+     *
      * @return null|array
      */
     public function send($notifiable, Notification $notification): ?array
@@ -40,27 +41,39 @@ class LaravelWablasChannel
             $message = LaravelWablasMessage::create($message);
         }
 
-        if ($notifiable instanceof User) {
-            $waNumber = $this->getNotifiableWhatsappNumber($notifiable);
-            if (!blank($waNumber)) {
-                $message->to($waNumber);
-            }
-        }
-
         $params = $message->toArray();
 
         if (blank($params['phone'])) {
-            throw FailedToSendNotification::destinationIsEmpty();
+
+            if ($notifiable instanceof User) {
+                $waNumber = $this->getNotifiableWhatsappNumber($notifiable);
+                if (!blank($waNumber)) {
+                    $message->to($waNumber);
+                }
+            }
+
+            $params = $message->toArray();
+
+            throw_if(blank($params['phone']), FailedToSendNotification::destinationIsEmpty());
         }
 
-        if (isset($params['token']) && !empty($params['token'])) {
-            $this->wablas->setToken($params['token']);
+        if (isset($params['token'])) {
+            if (!blank($params['token'])) {
+                $this->wablas->setToken($params['token']);
+            }
+
             unset ($params['token']);
         }
 
-        $response = $this->wablas->sendMessage($params);
+        match (true) {
+            isset($params['image']) => $this->wablas->setEndpoint('image'),
+            isset($params['audio']) => $this->wablas->setEndpoint('audio'),
+            isset($params['video']) => $this->wablas->setEndpoint('video'),
+            isset($params['document']) => $this->wablas->setEndpoint('document'),
+            default => $this->wablas->setEndpoint('message'),
+        };
 
-        return json_decode($response->getBody()->getContents(), true);
+        return $this->wablas->sendMessage($params);
     }
 
     /**
@@ -84,14 +97,6 @@ class LaravelWablasChannel
 
         if (!blank(config('laravel-wablas.whatsapp_number_json_field')) && !blank($waField)) {
             $whatsapp = $waField[config('laravel-wablas.whatsapp_number_json_field')];
-        }
-
-        if (!blank($whatsapp)) {
-            if (substr($whatsapp, 0, 1) == '0') {
-                $whatsapp = substr($whatsapp, 1, strlen($whatsapp) - 1);
-            }
-
-            $whatsapp = 62 . $whatsapp;
         }
 
         return $whatsapp;

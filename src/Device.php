@@ -27,7 +27,7 @@ class Device
      */
     public function __construct(string $token = null, string $endpoint = null)
     {
-        $this->setToken($token)->setEndpoint($endpoint);
+        $this->setToken($token)->setUrl($endpoint);
     }
 
     /**
@@ -39,7 +39,7 @@ class Device
      */
     public function getDeviceInfo(): array
     {
-        return Http::get("{$this->endpoint}/device/info?token={$this->token}")
+        return Http::get("{$this->url}/device/info?token={$this->token}")
             ->throw()
             ->json();
     }

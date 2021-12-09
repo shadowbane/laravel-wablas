@@ -2,9 +2,8 @@
 
 namespace Shadowbane\LaravelWablas;
 
-use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\ClientException;
-use Psr\Http\Message\ResponseInterface;
+use Illuminate\Support\Facades\Http;
 use Shadowbane\LaravelWablas\Exceptions\FailedToSendNotification;
 use Shadowbane\LaravelWablas\Traits\EndpointTrait;
 use Shadowbane\LaravelWablas\Traits\TokenTrait;
@@ -19,64 +18,23 @@ class LaravelWablas
     use EndpointTrait;
     use TokenTrait;
 
-    /** @var HttpClient HTTP Client */
-    protected HttpClient $http;
-
     /** @var Device Wablas Device API */
     public Device $device;
 
     /**
      * @param string|null $token
-     * @param HttpClient|null $httpClient
      * @param string|null $endpoint
      *
      * @throws FailedToSendNotification
      * @throws \Throwable
      */
-    public function __construct(string $token = null, HttpClient $httpClient = null, string $endpoint = null)
+    public function __construct(string $token = null, string $endpoint = null)
     {
-        $this->http = $httpClient ?? new HttpClient();
-
         $this
             ->setToken($token)
-            ->setEndpoint($endpoint);
+            ->setUrl($endpoint);
 
-        $this->device = new Device($this->token, $this->endpoint);
-    }
-
-    /**
-     * Get HttpClient.
-     *
-     * @return HttpClient
-     */
-    protected function httpClient(): HttpClient
-    {
-        return $this->http;
-    }
-
-    /**
-     * Set HTTP Client.
-     *
-     * @param HttpClient $http
-     *
-     * @return $this
-     */
-    public function setHttpClient(HttpClient $http): self
-    {
-        $this->http = $http;
-
-        return $this;
-    }
-
-    /**
-     * @param array $params
-     * @return ResponseInterface|null
-     *
-     * @throws FailedToSendNotification
-     */
-    public function sendMessage(array $params): ?ResponseInterface
-    {
-        return $this->sendRequest($params);
+        $this->device = new Device($this->token, $this->url);
     }
 
     /**
@@ -84,23 +42,30 @@ class LaravelWablas
      *
      * @param array  $params
      *
-     * @throws FailedToSendNotification|\GuzzleHttp\Exception\GuzzleException
+     * @throws FailedToSendNotification
      *
-     * @return ResponseInterface|null
+     * @return ?array
      */
-    protected function sendRequest(array $params): ?ResponseInterface
+    public function sendMessage(array $params): ?array
     {
         if (blank($this->token)) {
             throw FailedToSendNotification::tokenIsEmpty();
         }
 
         try {
-            return $this->http->post("{$this->endpoint}/send-message", [
-                'headers' => [
-                    'Authorization' => $this->token,
-                ],
-                'json' => $params,
-            ]);
+            return Http::withHeaders([
+                'Authorization' => $this->token,
+            ])
+                ->acceptJson()
+                ->post($this->getEndpoint(), [
+                    'data' => [
+                        $params,
+                    ],
+                ])
+                ->throw(function ($response, $exception) {
+                    dd($exception->getMessage());
+                })
+                ->json();
         } catch (ClientException $exception) {
             throw FailedToSendNotification::wablasRespondedWithAnError($exception);
         } catch (\Exception $exception) {
