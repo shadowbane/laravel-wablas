@@ -21,7 +21,6 @@ class LaravelWablasServiceProvider extends ServiceProvider
             ->give(static function () {
                 return new LaravelWablas(
                     config('laravel-wablas.token'),
-                    app(HttpClient::class),
                     config('laravel-wablas.endpoint')
                 );
             });
