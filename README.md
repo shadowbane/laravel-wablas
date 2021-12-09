@@ -4,7 +4,8 @@
 [![Total Downloads][ico-downloads]][link-packagist]
 
 ## About
-This package provides easy integration with [Wablas Indonesia](https://wablas.com/), provider for sending WhatsApp message via HTTP API.
+This package provides easy integration with [Wablas Indonesia](https://wablas.com/) Version 2, provider for sending WhatsApp message via HTTP API.
+For wablas documentation, you can check [here](https://documenter.getpostman.com/view/6046963/UVJZpybj#d245c6f4-13e8-4564-9d64-72484eed6767).
 
 ## Installation
 install the package via composer:
@@ -186,27 +187,6 @@ use App\Notifications\WhatsappNotification;
 $user->notify(new WhatsappNotification($message));
 ```
 
-### Sending to Multiple Users
-This packages allows array to be passed as parameter in `to()` methods.
-As Wablas allows comma-separated values as phone number, we automatically implode the array, and send it as comma-separated value to Wablas API.
-
-#### Example:
-```php
-
-
-    use Shadowbane\LaravelWablas\LaravelWablasMessage;
-
-    ...
-
-    public function toWhatsapp($notifiable)
-    {
-        return LaravelWablasMessage::create()
-            ->token('this-is-another-token-in-my-application')
-            ->to([$destination1, $destination2])
-            ->content($this->message);
-    }
-```
-
 If you prefer to send it to notifiables, you can send it via notification facade.
 ```php
 use Illuminate\Support\Facades\Notification;
@@ -214,6 +194,61 @@ use App\Models\User;
 use App\Notifications\WhatsappNotification;
 
 Notification::send(User::whereSomeCondition(1)->get(), new WhatsappNotification(123) );
+```
+
+<a name="send-to-notifiable"></a>
+### Send Image, Video, Audio, File
+With V2 of Wablas API, you can send image, video, audio, file to user.
+
+```php
+namespace App\Notifications;
+
+use Illuminate\Notifications\Notification;
+use Shadowbane\LaravelWablas\LaravelWablasChannel;
+use Shadowbane\LaravelWablas\LaravelWablasMessage;
+
+class WhatsappNotification extends Notification
+{
+    protected string $phoneNumber;
+    protected string $message;
+
+    /**
+     * Create a new notification instance.
+     *
+     * @param string $message;
+     *
+     * @return void
+     */
+    public function __construct(string $message)
+    {
+        $this->message = $message;
+    }
+
+    /**
+     * Get the notification's delivery channels.
+     *
+     * @param  mixed  $notifiable
+     *
+     * @return array
+     */
+    public function via($notifiable)
+    {
+        return [LaravelWablasChannel::class];
+    }
+
+    /**
+     * @param $notifiable
+     *
+     * @return LaravelWablasMessage
+     */
+    public function toWhatsapp($notifiable)
+    {
+        return LaravelWablasMessage::create()
+            ->content($this->message)
+            ->sendAsImage()
+            ->attachment('https://wablas.com/assets/img/wablas.png');
+    }
+}
 ```
 
 ### Notes
