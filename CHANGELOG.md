@@ -1,5 +1,11 @@
 # Changelog
 
+# v2.0.0-Alpha
+- :boom: Breaking Changes
+  - Using new Wablas V2 API
+  - Allows send message as text, images, files, audio, and video
+  - Removed Device API, as Wablas V2 API does not support it
+
 # v1.0.3 (2021-07-13)
 - Bugfix
 
