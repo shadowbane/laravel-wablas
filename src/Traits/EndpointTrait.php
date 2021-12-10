@@ -2,7 +2,6 @@
 
 namespace Shadowbane\LaravelWablas\Traits;
 
-use Shadowbane\LaravelWablas\Device;
 use Shadowbane\LaravelWablas\Exceptions\FailedToSendNotification;
 use Shadowbane\LaravelWablas\LaravelWablas;
 
@@ -25,7 +24,7 @@ trait EndpointTrait
      *
      * @throws \Throwable
      *
-     * @return EndpointTrait|Device|LaravelWablas
+     * @return EndpointTrait|LaravelWablas
      */
     public function setUrl(string $endpoint = null): self
     {
@@ -43,7 +42,7 @@ trait EndpointTrait
      *
      * @throws FailedToSendNotification
      *
-     * @return EndpointTrait|Device|LaravelWablas
+     * @return EndpointTrait|LaravelWablas
      */
     public function setEndpoint(string $endpoint = null): self
     {

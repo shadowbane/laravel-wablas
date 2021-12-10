@@ -18,9 +18,6 @@ class LaravelWablas
     use EndpointTrait;
     use TokenTrait;
 
-    /** @var Device Wablas Device API */
-    public Device $device;
-
     /**
      * @param string|null $token
      * @param string|null $endpoint
@@ -33,8 +30,6 @@ class LaravelWablas
         $this
             ->setToken($token)
             ->setUrl($endpoint);
-
-        $this->device = new Device($this->token, $this->url);
     }
 
     /**

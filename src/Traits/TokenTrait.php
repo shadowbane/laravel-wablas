@@ -2,7 +2,6 @@
 
 namespace Shadowbane\LaravelWablas\Traits;
 
-use Shadowbane\LaravelWablas\Device;
 use Shadowbane\LaravelWablas\Exceptions\FailedToSendNotification;
 use Shadowbane\LaravelWablas\LaravelWablas;
 
@@ -21,7 +20,7 @@ trait TokenTrait
      *
      * @throws \Throwable
      *
-     * @return TokenTrait|Device|LaravelWablas
+     * @return TokenTrait|LaravelWablas
      */
     public function setToken(string $token = null): self
     {
