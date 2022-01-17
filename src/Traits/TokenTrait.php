@@ -26,8 +26,6 @@ trait TokenTrait
     {
         $this->token = !blank($token) ? $token : config('laravel-wablas.token');
 
-        throw_if(blank($this->token), FailedToSendNotification::tokenIsEmpty());
-
         return $this;
     }
 }
