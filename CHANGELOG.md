@@ -1,5 +1,8 @@
 # Changelog
 
+# v2.0.4-Alpha
+- Removed exception thrown from TokenTrait
+
 # v2.0.0-Alpha
 - :boom: Breaking Changes
   - Using new Wablas V2 API
